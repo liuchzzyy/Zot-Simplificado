@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Zot Simplificado",
-  "version": "1.3.0",
+  "version": "1.2.0",
   "description": "Adds research metadata fields and an extensible bilingual reader with pluggable Google and OpenAI-compatible translation providers.",
   "icons": {
     "48": "content/icons/zot-simplificado.svg",
