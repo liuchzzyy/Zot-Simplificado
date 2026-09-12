@@ -1,0 +1,134 @@
+<linkset>
+  <html:link rel="localization" href="zot-simplificado.ftl" />
+</linkset>
+
+<groupbox id="zs-bilingual-preferences" class="main-section">
+  <label>
+    <html:h3 data-l10n-id="zs-bilingual-preferences-label">沉浸式双语对照</html:h3>
+  </label>
+
+  <description data-l10n-id="zs-bilingual-description">
+    在 Zotero 10 阅读模式中，把可见段落翻译并显示在原文下方。
+  </description>
+
+  <vbox class="zs-form">
+    <hbox class="zs-form-row" align="center">
+      <label class="zs-form-label" control="zs-bilingual-engine" data-l10n-id="zs-bilingual-engine">翻译引擎</label>
+      <menulist id="zs-bilingual-engine" flex="1" preference="extensions.zotero.zotSimplificado.engine">
+        <menupopup>
+          <menuitem label="Google 翻译（网页接口）" value="google" />
+          <menuitem label="OpenAI 兼容 AI API" value="openai-compatible" />
+        </menupopup>
+      </menulist>
+    </hbox>
+    <hbox class="zs-form-row" align="center">
+      <label class="zs-form-label" control="zs-bilingual-source" data-l10n-id="zs-bilingual-source-language">原语言</label>
+      <menulist id="zs-bilingual-source" flex="1" preference="extensions.zotero.zotSimplificado.sourceLang">
+        <menupopup>
+          <menuitem label="自动检测" value="auto" />
+          <menuitem label="英语" value="en" />
+          <menuitem label="中文" value="zh-CN" />
+          <menuitem label="日语" value="ja" />
+          <menuitem label="韩语" value="ko" />
+          <menuitem label="德语" value="de" />
+          <menuitem label="法语" value="fr" />
+          <menuitem label="西班牙语" value="es" />
+        </menupopup>
+      </menulist>
+    </hbox>
+    <hbox class="zs-form-row" align="center">
+      <label class="zs-form-label" control="zs-bilingual-target" data-l10n-id="zs-bilingual-target-language">目标语言</label>
+      <menulist id="zs-bilingual-target" flex="1" preference="extensions.zotero.zotSimplificado.targetLang">
+        <menupopup>
+          <menuitem label="中文（简体）" value="zh-CN" />
+          <menuitem label="英语" value="en" />
+          <menuitem label="日语" value="ja" />
+          <menuitem label="韩语" value="ko" />
+          <menuitem label="德语" value="de" />
+          <menuitem label="法语" value="fr" />
+          <menuitem label="西班牙语" value="es" />
+        </menupopup>
+      </menulist>
+    </hbox>
+  </vbox>
+
+  <vbox id="zs-openai-settings" class="zs-settings-card">
+    <label><html:h4 data-l10n-id="zs-bilingual-openai-settings">OpenAI 兼容 API 设置</html:h4></label>
+    <description data-l10n-id="zs-bilingual-openai-hint">
+      地址可以填写服务商的 Base URL，例如 https://api.openai.com/v1 或 https://api.deepseek.com/v1。
+    </description>
+    <vbox class="zs-form">
+      <hbox class="zs-form-row" align="center">
+        <label class="zs-form-label" control="zs-openai-base-url" data-l10n-id="zs-bilingual-base-url">Base URL</label>
+        <html:input
+          id="zs-openai-base-url"
+          class="zs-text-input"
+          type="url"
+          spellcheck="false"
+          placeholder="https://api.openai.com/v1"
+          preference="extensions.zotero.zotSimplificado.openaiBaseURL"
+        />
+      </hbox>
+      <hbox class="zs-form-row" align="center">
+        <label class="zs-form-label" control="zs-openai-key" data-l10n-id="zs-bilingual-api-key">API Key</label>
+        <html:input
+          id="zs-openai-key"
+          class="zs-text-input"
+          type="password"
+          spellcheck="false"
+          autocomplete="off"
+          placeholder="sk-..."
+          preference="extensions.zotero.zotSimplificado.openaiAPIKey"
+        />
+      </hbox>
+      <hbox class="zs-form-row" align="center">
+        <label class="zs-form-label" control="zs-openai-model" data-l10n-id="zs-bilingual-model">模型</label>
+        <hbox class="zs-model-controls" flex="1" align="center">
+          <html:select
+            id="zs-openai-model"
+            class="zs-select-input"
+            disabled="disabled"
+            preference="extensions.zotero.zotSimplificado.openaiModel"
+          >
+            <html:option value="">请先读取模型列表</html:option>
+          </html:select>
+          <button id="zs-load-models" data-l10n-id="zs-bilingual-load-models" disabled="true">读取模型列表</button>
+        </hbox>
+      </hbox>
+    </vbox>
+  </vbox>
+
+  <vbox class="zs-form">
+    <hbox class="zs-form-row" align="center">
+      <label class="zs-form-label" control="zs-cache-limit" data-l10n-id="zs-bilingual-cache-limit">缓存条数</label>
+      <html:input
+        id="zs-cache-limit"
+        class="zs-number-input"
+        type="number"
+        min="20"
+        max="1000"
+        step="10"
+        placeholder="300"
+      />
+    </hbox>
+    <hbox class="zs-form-row" align="center">
+      <label class="zs-form-label" control="zs-concurrency" data-l10n-id="zs-bilingual-concurrency">并发请求数</label>
+      <html:input
+        id="zs-concurrency"
+        class="zs-number-input"
+        type="number"
+        min="1"
+        max="6"
+        step="1"
+        placeholder="2"
+      />
+    </hbox>
+    <description data-l10n-id="zs-bilingual-defaults-hint">留空时使用默认值：缓存 300 条，并发 2 个请求。</description>
+  </vbox>
+
+  <hbox class="zs-preferences-actions" align="center">
+    <button id="zs-test-translation" data-l10n-id="zs-bilingual-test">测试当前翻译设置</button>
+    <button id="zs-clear-cache" data-l10n-id="zs-bilingual-clear-cache">清空翻译缓存</button>
+    <label id="zs-preferences-status" class="zs-preferences-status" flex="1" />
+  </hbox>
+</groupbox>

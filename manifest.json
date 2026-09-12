@@ -1,14 +1,18 @@
 {
   "manifest_version": 2,
-  "name": "Item Key Visible",
-  "version": "1.1.3",
-  "description": "Adds 'Item Key', editable 'Short Note', and editable 'Translated Title' columns and Info-pane rows to Zotero.",
+  "name": "Zot Simplificado",
+  "version": "1.3.0",
+  "description": "Adds research metadata fields and an extensible bilingual reader with pluggable Google and OpenAI-compatible translation providers.",
+  "icons": {
+    "48": "content/icons/zot-simplificado.svg",
+    "96": "content/icons/zot-simplificado.svg"
+  },
   "applications": {
     "zotero": {
-      "id": "item-key-column@rvella",
-      "update_url": "https://raw.githubusercontent.com/liuchzzyy/Zotero-Item-Key-Column/main/updates.json",
+      "id": "zot-simplificado@liuchzzyy",
+      "update_url": "https://raw.githubusercontent.com/liuchzzyy/Zot-Simplificado/main/updates.json",
       "strict_min_version": "7.0.0",
-      "strict_max_version": "9.0.*"
+      "strict_max_version": "10.0.*"
     }
   }
 }

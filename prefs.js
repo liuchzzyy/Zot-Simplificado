@@ -1,0 +1,11 @@
+pref("extensions.zotero.zotSimplificado.engine", "google");
+pref("extensions.zotero.zotSimplificado.sourceLang", "auto");
+pref("extensions.zotero.zotSimplificado.targetLang", "zh-CN");
+pref("extensions.zotero.zotSimplificado.googleEndpoint", "https://translate.googleapis.com/translate_a/single");
+pref("extensions.zotero.zotSimplificado.openaiBaseURL", "https://api.openai.com/v1");
+pref("extensions.zotero.zotSimplificado.openaiAPIKey", "");
+pref("extensions.zotero.zotSimplificado.openaiModel", "");
+pref("extensions.zotero.zotSimplificado.openaiPrompt", "You are a professional academic translator. Translate the text accurately and naturally. Output only the translation, without explanations.");
+pref("extensions.zotero.zotSimplificado.cacheMaxEntries", 300);
+pref("extensions.zotero.zotSimplificado.maxConcurrency", 2);
+pref("extensions.zotero.zotSimplificado.translationCache", "{}");

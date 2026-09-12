@@ -1,0 +1,163 @@
+#zs-bilingual-preferences {
+  width: 100%;
+  max-width: 760px;
+  box-sizing: border-box;
+  padding: 8px 0 24px;
+}
+
+#zs-bilingual-preferences description {
+  display: block;
+  max-width: 100%;
+  color: var(--fill-secondary, #64748b);
+  line-height: 1.45;
+  margin: 4px 0 12px;
+  white-space: normal;
+}
+
+.zs-form {
+  width: 100%;
+  min-width: 0;
+  margin: 4px 0 10px;
+}
+
+.zs-form-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  margin: 5px 0;
+}
+
+.zs-form-label {
+  flex: 0 0 112px;
+  min-width: 0;
+  margin-right: 10px;
+  white-space: normal;
+}
+
+.zs-form-row > menulist,
+.zs-form-row > .zs-text-input,
+.zs-form-row > .zs-number-input,
+.zs-model-controls {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 0;
+}
+
+.zs-text-input,
+.zs-number-input,
+.zs-select-input {
+  box-sizing: border-box;
+  min-width: 0;
+  height: 32px;
+  padding: 5px 9px;
+  border: 1px solid var(--fill-tertiary, rgba(127, 127, 127, .35));
+  border-radius: 6px;
+  background: var(--material-background, Canvas);
+  color: var(--fill-primary, CanvasText);
+  font: inherit;
+}
+
+.zs-text-input {
+  width: 100%;
+}
+
+.zs-number-input {
+  width: min(100%, 220px);
+}
+
+.zs-text-input:focus,
+.zs-number-input:focus,
+.zs-select-input:focus {
+  border-color: var(--accent-blue, #4072e5);
+  outline: 2px solid var(--accent-blue30, rgba(64, 114, 229, .3));
+  outline-offset: 0;
+}
+
+.zs-text-input:disabled,
+.zs-number-input:disabled,
+.zs-select-input:disabled {
+  opacity: .65;
+}
+
+.zs-model-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.zs-select-input {
+  flex: 1 1 auto;
+  width: 0;
+}
+
+.zs-model-controls button {
+  flex: 0 0 auto;
+}
+
+.zs-settings-card {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  margin: 14px 0;
+  border: 1px solid var(--fill-quinary, #dbe7f5);
+  border-radius: 8px;
+  background: var(--material-background, rgba(127, 127, 127, .06));
+}
+
+.zs-settings-card h4 {
+  margin: 0 0 4px;
+}
+
+.zs-preferences-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  margin-top: 14px;
+}
+
+.zs-preferences-actions button {
+  flex: 0 0 auto;
+}
+
+.zs-preferences-status {
+  flex: 1 1 180px;
+  min-width: 0;
+  margin-left: 2px;
+  color: var(--fill-secondary, #64748b);
+  white-space: normal;
+}
+
+.zs-preferences-status[data-type="success"] {
+  color: var(--accent-green, #39bf68);
+}
+
+.zs-preferences-status[data-type="error"] {
+  color: var(--accent-red, #db2c3a);
+}
+
+@media (max-width: 560px) {
+  .zs-form-row {
+    display: block;
+    margin: 9px 0;
+  }
+
+  .zs-form-label {
+    display: block;
+    width: auto;
+    margin: 0 0 4px;
+  }
+
+  .zs-form-row > menulist,
+  .zs-form-row > .zs-text-input,
+  .zs-form-row > .zs-number-input,
+  .zs-model-controls {
+    display: block;
+    width: 100%;
+  }
+
+  .zs-model-controls {
+    display: flex;
+  }
+}
