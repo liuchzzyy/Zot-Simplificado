@@ -25,6 +25,8 @@
         toolbarDoc,
         win: null,
         enabled: false,
+        enabling: false,
+        generation: 0,
         monitoring: false,
         timer: null,
         suppressUntil: 0,
@@ -33,20 +35,20 @@
         resizeHandler: null,
         modeHandler: null,
         modeObserver: null,
+        modeTimer: null,
+        unloadHandler: null,
         button: null,
         buttonHandler: null,
-        inFlight: new Set(),
+        inFlight: new Map(),
         blocks: new Map(),
         emptyAttempts: 0
       };
       sessions.set(reader, session);
       allSessions.add(session);
     }
-    if (toolbarDoc && session.toolbarDoc !== toolbarDoc && session.modeHandler) {
-      session.toolbarDoc?.removeEventListener("click", session.modeHandler, true);
-      session.modeObserver?.disconnect();
-      session.modeHandler = null;
-      session.modeObserver = null;
+    if (toolbarDoc && session.toolbarDoc !== toolbarDoc) {
+      deactivate(session);
+      removeModeHandler(session);
     }
     session.toolbarDoc = toolbarDoc || session.toolbarDoc;
     return session;
@@ -94,7 +96,7 @@
   }
 
   function updateToolbar(session, enabled) {
-    const button = toolbarButton(session.toolbarDoc);
+    const button = session.button || toolbarButton(session.toolbarDoc);
     if (!button) return;
     button.dataset.enabled = String(enabled);
     button.setAttribute("aria-pressed", String(enabled));
@@ -148,20 +150,29 @@
     win.addEventListener("scroll", session.scrollHandler, true);
     win.addEventListener("resize", session.resizeHandler);
     const root = win.document.querySelector("#sdt-content");
-    if (root && typeof MutationObserver !== "undefined") {
-      session.observer = new MutationObserver((mutations) => {
+    const Observer = Zotero.getMainWindow()?.MutationObserver;
+    if (root && Observer) {
+      session.observer = new Observer((mutations) => {
         if (mutations.some((mutation) => !isOwnMutation(mutation))) scheduleRender(session, 250);
       });
       session.observer.observe(root, { childList: true, subtree: true });
     }
   }
 
+  // Zotero destroys the SDT iframe before reporting Reading Mode as off.
+  // Each cleanup must tolerate dead Gecko wrappers without skipping UI reset.
+  function safely(cleanup) {
+    try { cleanup(); } catch (error) {
+      if (!String(error).includes("dead object")) namespace.utils.log("阅读器清理失败", error);
+    }
+  }
+
   function stopMonitoring(session) {
-    if (session.timer && session.win) session.win.clearTimeout(session.timer);
+    if (session.timer) clearTimeout(session.timer);
     session.timer = null;
-    if (session.scrollHandler && session.win) session.win.removeEventListener("scroll", session.scrollHandler, true);
-    if (session.resizeHandler && session.win) session.win.removeEventListener("resize", session.resizeHandler);
-    session.observer?.disconnect();
+    safely(() => session.win?.removeEventListener("scroll", session.scrollHandler, true));
+    safely(() => session.win?.removeEventListener("resize", session.resizeHandler));
+    safely(() => session.observer?.disconnect());
     session.scrollHandler = null;
     session.resizeHandler = null;
     session.observer = null;
@@ -170,15 +181,27 @@
 
   function deactivate(session) {
     session.enabled = false;
+    session.enabling = false;
+    session.generation += 1;
+    safely(() => updateToolbar(session, false));
     stopMonitoring(session);
-    renderer.clear(session.win?.document);
-    updateToolbar(session, false);
+    safely(() => renderer.clear(session.win?.document));
+    session.win = null;
+    session.blocks.clear();
+    session.inFlight.clear();
+    session.suppressUntil = 0;
+    session.emptyAttempts = 0;
+  }
+
+  function isCurrent(session, generation) {
+    return session.enabled && session.generation === generation
+      && windowAPI.isReadingModeActive(session.toolbarDoc);
   }
 
   function scheduleRender(session, milliseconds) {
     if (!session.enabled || Date.now() < session.suppressUntil || !session.win) return;
-    if (session.timer) session.win.clearTimeout(session.timer);
-    session.timer = session.win.setTimeout(() => {
+    if (session.timer) clearTimeout(session.timer);
+    session.timer = setTimeout(() => {
       session.timer = null;
       render(session).catch((error) => namespace.utils.log("阅读器渲染失败", error));
     }, milliseconds);
@@ -188,29 +211,31 @@
     const key = cacheKey(session, block);
     if (cache.get(key)) return;
     if (session.inFlight.has(key)) return;
-    session.inFlight.add(key);
+    const generation = session.generation;
+    session.inFlight.set(key, generation);
     block.source.setAttribute(readerConfig.sourceStateAttribute, "pending");
     block.source.setAttribute(readerConfig.sourceKeyAttribute, key);
     try {
-      const translated = String(await service.translate(block.text)).trim();
+      const translated = String(await service.translate(block.text, { isCancelled: () => !isCurrent(session, generation) })).trim();
       if (!translated) throw new Error("翻译结果为空");
       cache.set(key, translated);
-      if (session.enabled && block.source.isConnected) {
+      if (isCurrent(session, generation) && block.source.isConnected) {
         renderer.setTranslation(block.source, block.id, translated);
         block.source.setAttribute(readerConfig.sourceStateAttribute, "done");
         session.suppressUntil = Date.now() + 300;
       }
     } catch (error) {
-      if (session.enabled && block.source.isConnected) {
+      if (isCurrent(session, generation) && block.source.isConnected) {
         block.source.setAttribute(readerConfig.sourceStateAttribute, "error");
         renderer.setError(block.source, block.id, error?.message || error, () => retryBlock(session, block));
       }
     } finally {
-      session.inFlight.delete(key);
+      if (session.inFlight.get(key) === generation) session.inFlight.delete(key);
     }
   }
 
   function retryBlock(session, block) {
+    if (!isCurrent(session, session.generation) || !block.source.isConnected) return;
     const key = cacheKey(session, block);
     session.inFlight.delete(key);
     cache.remove(key);
@@ -222,8 +247,7 @@
 
   async function render(session) {
     if (!session.enabled) return;
-    const modeButton = session.toolbarDoc?.querySelector("#readingMode");
-    if ((modeButton && !windowAPI.isReadingModeActive(session.toolbarDoc)) || (!modeButton && !windowAPI.hasContent(session.reader))) {
+    if (!windowAPI.isReadingModeActive(session.toolbarDoc)) {
       deactivate(session);
       return;
     }
@@ -251,27 +275,49 @@
     }
   }
 
+  function removeModeHandler(session) {
+    if (session.modeTimer) clearTimeout(session.modeTimer);
+    session.modeTimer = null;
+    safely(() => session.toolbarDoc?.removeEventListener("click", session.modeHandler, true));
+    safely(() => session.toolbarDoc?.removeEventListener("change", session.modeHandler, true));
+    safely(() => session.toolbarDoc?.defaultView?.removeEventListener("unload", session.unloadHandler));
+    safely(() => session.modeObserver?.disconnect());
+    session.modeHandler = null;
+    session.modeObserver = null;
+    session.unloadHandler = null;
+  }
+
   function installModeHandler(session) {
     if (session.modeHandler || !session.toolbarDoc) return;
+    const syncMode = () => {
+      if ((session.enabled || session.enabling) && !windowAPI.isReadingModeActive(session.toolbarDoc)) {
+        deactivate(session);
+      }
+    };
     session.modeHandler = (event) => {
-      if (!event.target?.closest?.("#readingMode")) return;
-      setTimeout(() => {
-        if (!session.enabled) return;
-        if (windowAPI.isReadingModeActive(session.toolbarDoc)) {
-          installMonitoring(session);
-          scheduleRender(session, 100);
-        } else {
-          deactivate(session);
-        }
-      }, 350);
+      if (!event.target?.closest?.("#readingMode, #reading-mode-enabled")) return;
+      if (session.modeTimer) clearTimeout(session.modeTimer);
+      session.modeTimer = setTimeout(() => {
+        session.modeTimer = null;
+        syncMode();
+      }, 0);
     };
     session.toolbarDoc.addEventListener("click", session.modeHandler, true);
-    const Observer = session.toolbarDoc.defaultView?.MutationObserver;
+    session.toolbarDoc.addEventListener("change", session.modeHandler, true);
+    session.unloadHandler = () => {
+      deactivate(session);
+      removeModeHandler(session);
+      allSessions.delete(session);
+      sessions.delete(session.reader);
+    };
+    session.toolbarDoc.defaultView?.addEventListener("unload", session.unloadHandler);
+    // Use a chrome-window constructor: event.doc is an unwrapped content
+    // document, whose observer cannot read privileged JS option objects.
+    const Observer = Zotero.getMainWindow()?.MutationObserver;
     if (Observer) {
-      session.modeObserver = new Observer(() => {
-        if (session.enabled && !windowAPI.isReadingModeActive(session.toolbarDoc)) deactivate(session);
-      });
+      session.modeObserver = new Observer(syncMode);
       session.modeObserver.observe(session.toolbarDoc, {
+        childList: true,
         attributes: true,
         subtree: true,
         attributeFilter: ["class", "aria-pressed", "data-active", "data-state"]
@@ -287,7 +333,13 @@
     session.buttonHandler = async (eventClick) => {
       eventClick.preventDefault();
       eventClick.stopPropagation();
-      updateToolbar(session, await setEnabled(session, !session.enabled));
+      try {
+        await setEnabled(session, !(session.enabled || session.enabling));
+        updateToolbar(session, session.enabled);
+      } catch (error) {
+        deactivate(session);
+        namespace.utils.log("双语模式切换失败", error);
+      }
     };
     button.addEventListener("click", session.buttonHandler);
   }
@@ -315,7 +367,7 @@
     const session = getSession(reader, doc);
     let button = toolbarButton(doc);
     if (!button) {
-      const button = doc.createElement("button");
+      button = doc.createElement("button");
       button.id = readerConfig.toolbarButtonID;
       button.type = "button";
       button.textContent = "双语";
@@ -323,7 +375,6 @@
       button.style.cssText = "min-width: 44px; height: 28px; padding: 0 10px; border-radius: 4px; font-size: 12px; cursor: pointer;";
       append(button);
     }
-    button = toolbarButton(doc);
     installButtonHandler(session, button);
     addSettingsButton(doc, append);
     installModeHandler(session);
@@ -343,12 +394,21 @@
       showMessage(session.toolbarDoc, "请先打开 Zotero 阅读模式。");
       return false;
     }
-    const win = await windowAPI.waitForContentWindow(session.reader);
+    const generation = ++session.generation;
+    session.enabling = true;
+    session.suppressUntil = 0;
+    const cancelled = () => session.generation !== generation || !windowAPI.isReadingModeActive(session.toolbarDoc);
+    const win = await windowAPI.waitForContentWindow(session.reader, cancelled);
+    if (session.generation !== generation) return false;
+    session.enabling = false;
+    if (cancelled()) {
+      deactivate(session);
+      return false;
+    }
     if (!win) {
       showMessage(session.toolbarDoc, "没有找到阅读模式正文，请稍后重试。");
       return false;
     }
-    session.win = win;
     session.enabled = true;
     installMonitoring(session);
     scheduleRender(session, 50);
@@ -395,12 +455,10 @@
     shutdown() {
       if (readerListener && Zotero.Reader?.unregisterEventListener) Zotero.Reader.unregisterEventListener("renderToolbar", readerListener);
       for (const session of allSessions) {
-        session.enabled = false;
-        stopMonitoring(session);
-        renderer.clear(session.win?.document);
-        if (session.modeHandler && session.toolbarDoc) session.toolbarDoc.removeEventListener("click", session.modeHandler, true);
-        session.modeObserver?.disconnect();
-        if (session.button && session.buttonHandler) session.button.removeEventListener("click", session.buttonHandler);
+        deactivate(session);
+        removeModeHandler(session);
+        safely(() => session.button?.removeEventListener("click", session.buttonHandler));
+        sessions.delete(session.reader);
       }
       allSessions.clear();
       registered = false;

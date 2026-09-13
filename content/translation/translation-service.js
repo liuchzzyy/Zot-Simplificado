@@ -49,7 +49,16 @@
     };
     const provider = registry.get(overrides.provider || current.provider);
     if (!provider) return Promise.reject(new Error(`未找到翻译 Provider：${context.settings.provider}`));
-    return enqueue(() => provider.translate(context));
+    return enqueue(() => {
+      // Requests already sent may finish, but queued work from a closed
+      // reading session must not consume provider calls.
+      if (overrides.isCancelled?.()) {
+        const error = new Error("翻译已取消");
+        error.name = "AbortError";
+        throw error;
+      }
+      return provider.translate(context);
+    });
   }
 
   function listProviders() {

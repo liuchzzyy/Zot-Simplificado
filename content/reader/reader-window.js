@@ -4,7 +4,9 @@
   function resolve(reader) {
     const candidates = [];
     const add = (win) => {
-      if (win?.document && !candidates.includes(win)) candidates.push(win);
+      try {
+        if (win?.document && !candidates.includes(win)) candidates.push(win);
+      } catch { /* An SDT iframe may have just been destroyed. */ }
     };
     add(reader?._iframeWindow);
     add(reader?.iframeWindow);
@@ -34,12 +36,17 @@
   }
 
   function isReadingModeActive(toolbarDoc) {
-    const button = toolbarDoc?.querySelector("#readingMode");
-    return button ? button.classList.contains("active") : false;
+    try {
+      const button = toolbarDoc?.querySelector("#readingMode");
+      return button ? button.classList.contains("active") : false;
+    } catch {
+      return false;
+    }
   }
 
-  async function waitForContentWindow(reader) {
+  async function waitForContentWindow(reader, isCancelled = () => false) {
     for (let attempt = 0; attempt < 25; attempt++) {
+      if (isCancelled()) return null;
       const win = resolve(reader);
       if (win?.document?.querySelector("#sdt-content")) return win;
       await new Promise((resolveDelay) => setTimeout(resolveDelay, 200));
