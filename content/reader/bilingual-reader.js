@@ -145,6 +145,7 @@
     session.win = win;
     session.monitoring = true;
     renderer.injectStyles(win.document);
+    renderer.installSelectionSupport(win);
     session.scrollHandler = () => scheduleRender(session, 150);
     session.resizeHandler = () => scheduleRender(session, 150);
     win.addEventListener("scroll", session.scrollHandler, true);

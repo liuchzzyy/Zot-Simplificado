@@ -3,9 +3,9 @@
     "zot-simplificado@liuchzzyy": {
       "updates": [
         {
-          "version": "1.2.1",
-          "update_link": "https://github.com/liuchzzyy/Zot-Simplificado/releases/download/v1.2.1/zot-simplificado-1.2.1.xpi",
-          "update_hash": "sha256:abe623d5d3bee7e3e0267859c5d2694824d0c1e1214732015d5e1808d458c662"
+          "version": "1.2.3",
+          "update_link": "https://github.com/liuchzzyy/Zot-Simplificado/releases/download/v1.2.3/zot-simplificado-1.2.3.xpi",
+          "update_hash": "sha256:7a028093f7ec51ab82e9008379313e5e7968f505494f6550c9aa19fbd0663867"
         }
       ]
     }

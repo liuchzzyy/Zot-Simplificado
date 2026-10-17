@@ -49,7 +49,7 @@ function fixture({ dead = false, waiting = false } = {}) {
     Reader: {
       Window: { resolve: () => win, isReadingModeActive: () => mode, waitForContentWindow: () => waiting ? content.promise : Promise.resolve(win) },
       Blocks: { hash: t => t, collect: () => blocks },
-      Renderer: { injectStyles() {}, clear() { cleared++; }, setLoading() {}, setTranslation(...args) { translations.push(args); }, setError(...args) { translations.push(args); } }
+      Renderer: { injectStyles() {}, installSelectionSupport() {}, clear() { cleared++; }, setLoading() {}, setTranslation(...args) { translations.push(args); }, setError(...args) { translations.push(args); } }
     },
     Translation: {
       Cache: { get: k => cache.get(k), set: (k,v) => cache.set(k,v), remove: k => cache.delete(k), clear: () => cache.clear() },

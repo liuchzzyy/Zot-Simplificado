@@ -39,7 +39,7 @@
 
 ## 自动更新
 
-插件会通过 GitHub Release 检查新版本。当前版本为 `1.2.1`，安装包名称为 `zot-simplificado-1.2.1.xpi`。
+插件会通过 GitHub Release 检查新版本。当前版本为 `1.2.3`，安装包名称为 `zot-simplificado-1.2.3.xpi`。
 
 ## 兼容性
 
